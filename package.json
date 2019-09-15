@@ -1,0 +1,28 @@
+{
+  "name": "breadtubebot",
+  "version": "1.0.0",
+  "description": "Facebook bot that generates hypothetical youtube video essay titles.",
+  "main": "bot.js",
+  "dependencies": {
+    "bot-util": "0.0.8",
+    "canvas": "^2.6.0",
+    "fb": "^2.0.0",
+    "node-cron": "^2.0.3",
+    "text2png": "^2.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/declankirk/breadtubebot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/declankirk/breadtubebot/issues"
+  },
+  "homepage": "https://github.com/declankirk/breadtubebot#readme"
+}

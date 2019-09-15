@@ -4,10 +4,11 @@
   "description": "Facebook bot that generates hypothetical youtube video essay titles.",
   "main": "bot.js",
   "dependencies": {
-    "bot-util": "0.0.8",
     "canvas": "^2.6.0",
     "fb": "^2.0.0",
+    "form-data": "^2.5.1",
     "node-cron": "^2.0.3",
+    "node-fetch": "^2.6.0",
     "text2png": "^2.2.0"
   },
   "devDependencies": {},

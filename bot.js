@@ -3,18 +3,20 @@ const TOKEN = "EAACVS6jUj0QBAJxOM5uaZB6ydz8LhvuzUcZC1Io6BeqcaCXEXCWO4MxD7uBYsyU2
 
 const FB = require('fb');
 FB.setAccessToken(TOKEN);
-const CRON = require("node-cron");
+const cron = require("node-cron");
 
-
-FB.api(`${PAGE_ID}/photos`, "post", {
-    source: genImgURL()
-}, res => {
-    if (!res || res.error) {
-        console.log(!res ? "Error" : res.error);
-        return;
-    }
-    var postID = res.post_id;
-    console.log("Posted: " + postID);
+const task = cron.schedule("0 * * * *", () => {
+    genImg();
+    var FormData = require('form-data');
+    var fs = require('fs');
+    var form = new FormData();
+    form.append('access_token', TOKEN);
+    form.append('source', fs.createReadStream("./out.png"));
+    const fetch = require("node-fetch");
+    fetch(`https://graph.facebook.com/${PAGE_ID}/photos`, {
+        body: form,
+        method: 'post'
+    });
 });
 
 /**
@@ -57,21 +59,17 @@ function genTitle() {
 }
 
 /**
- * Generates image url of text
+ * Generates image
  */
-function genImgURL() {
+function genImg() {
     var text2png = require('text2png');
     var fs = require('fs');
     fs.writeFileSync('out.png', text2png(genTitle(), {
         color: 'black',
         backgroundColor: '#f1f1f1',
         font: '80px Sans',
-        padding: 100,
-        lineSpacing: 20,
-        output: "dataURL"
+        padding: 75
     }));
-
-    return "./out.png";
 }
 
 /**
@@ -104,3 +102,6 @@ function testWhite(x) {
     var white = new RegExp(/^\s$/);
     return white.test(x.charAt(0));
 };
+
+
+task.start();

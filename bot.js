@@ -1,10 +1,22 @@
-const PAGE_ID = "111183643597806"
-const TOKEN = "EAACVS6jUj0QBAJxOM5uaZB6ydz8LhvuzUcZC1Io6BeqcaCXEXCWO4MxD7uBYsyU2GKFo3G3zMxmwISzUYTrv7xhQP6cl7gCpZCvc1pWnj1bZCnqd2jocCTENrJARiTvCDDDG2bdT779deCIesqq6BR25od3zRo52ZCpJjx2cKwZAyux0I9UAvb";
+/**
+ * VIDEO ESSAY BOT
+ * 
+ * Author: Declan Kirk
+ * Created: 08/09/2019
+ * 
+ * Posts hypothetical YouTube video essays to https://www.facebook.com/videoessaybot every hour.
+ */
 
+const config = require('../config/breadtubebot.json');
+const PAGE_ID = config.page_id;
+const TOKEN = config.token;
 const FB = require('fb');
 FB.setAccessToken(TOKEN);
 const cron = require("node-cron");
 
+/**
+ * Image upload, scheduled for each hour
+ */
 const task = cron.schedule("0 * * * *", () => {
     genImg();
     var FormData = require('form-data');
@@ -59,7 +71,7 @@ function genTitle() {
 }
 
 /**
- * Generates image
+ * Generates basic image
  */
 function genImg() {
     var text2png = require('text2png');

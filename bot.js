@@ -4,7 +4,9 @@
  * Author: Declan Kirk
  * Created: 08/09/2019
  * 
- * Posts hypothetical YouTube video essays to https://www.facebook.com/videoessaybot every hour.
+ * Posts hypothetical YouTube video essays to https://www.facebook.com/videoessaybot every 3 hours.
+ * 
+ * Version 1.0.1
  */
 
 const config = require('../config/breadtubebot.json');
@@ -13,23 +15,6 @@ const TOKEN = config.token;
 const FB = require('fb');
 FB.setAccessToken(TOKEN);
 const cron = require("node-cron");
-
-/**
- * Image upload, scheduled for each hour
- */
-const task = cron.schedule("0 * * * *", () => {
-    genImg();
-    var FormData = require('form-data');
-    var fs = require('fs');
-    var form = new FormData();
-    form.append('access_token', TOKEN);
-    form.append('source', fs.createReadStream("./out.png"));
-    const fetch = require("node-fetch");
-    fetch(`https://graph.facebook.com/${PAGE_ID}/photos`, {
-        body: form,
-        method: 'post'
-    });
-});
 
 /**
  * Generates title, length and views as string
@@ -62,7 +47,7 @@ function genTitle() {
     var mins = Math.floor(Math.random()*59);
     var secs = ("0" + Math.floor(Math.random()*59)).slice(-2);
     out += " | (" + mins + ":" + secs + ")";
-    out = wordWrap(out, 25);
+    out = wordWrap(out, 40);
     var views = Math.floor(Math.random()*1000000);
     views = views.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     out += "\n\n" + views + " views";
@@ -71,7 +56,8 @@ function genTitle() {
 }
 
 /**
- * Generates basic image
+ * Generates basic image to out.png
+ * Thumbnails/css soon
  */
 function genImg() {
     var text2png = require('text2png');
@@ -115,5 +101,35 @@ function testWhite(x) {
     return white.test(x.charAt(0));
 };
 
+/**
+ * Generates image, posts to page
+ */
+async function postImg() {
+    genImg();
+    var FormData = require('form-data');
+    var fs = require('fs');
+    var form = new FormData();
+    form.append('access_token', TOKEN);
+    form.append('source', fs.createReadStream("./out.png"));
+    const fetch = require("node-fetch");
+    try {
+        let response = await fetch(`https://graph.facebook.com/${PAGE_ID}/photos`, {
+            body: form,
+            method: 'post'
+        });
+        response = await response.json();
+        console.log(response);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+
+/**
+ * Image upload, scheduled for every 3 hours
+ */
+const task = cron.schedule("0 */3 * * *", () => {
+    postImg();
+});
 
 task.start();

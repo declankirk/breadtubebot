@@ -10,7 +10,11 @@
     "node-cron": "^2.0.3",
     "node-fetch": "^2.6.0",
     "pm2": "^3.5.1",
-    "text2png": "^2.2.0"
+    "request": "^2.88.0",
+    "sharp": "^0.23.0",
+    "text2png": "^2.2.0",
+    "unsplash-js": "^5.0.0",
+    "username-generator": "^1.1.0"
   },
   "devDependencies": {},
   "scripts": {

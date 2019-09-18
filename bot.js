@@ -6,7 +6,7 @@
  * 
  * Posts hypothetical YouTube video essays to https://www.facebook.com/videoessaybot every 3 hours.
  * 
- * Version 1.1.0
+ * Version 1.1.1
  */
 
 const config = require('../config/breadtubebot.json');
@@ -32,16 +32,16 @@ global.fetch = require('node-fetch');
  * Generates random title
  */
 function genTitle() {
-    var fs = require("fs");
-    var text = fs.readFileSync("./templates.txt");
-    var templates = text.toString().split("\r\n");
-    text = fs.readFileSync("./nouns.txt");
-    var nouns = text.toString().split("\r\n");
-    text = fs.readFileSync("./adjectives.txt");
-    var adjectives = text.toString().split("\r\n");
+    var fs = require('fs');
+    var text = fs.readFileSync('./templates.txt');
+    var templates = text.toString().split('\r\n');
+    text = fs.readFileSync('./nouns.txt');
+    var nouns = text.toString().split('\r\n');
+    text = fs.readFileSync('./adjectives.txt');
+    var adjectives = text.toString().split('\r\n');
 
     var template = templates[Math.floor(Math.random()*templates.length)];
-    var out = "";
+    var out = '';
     var keywords = [];
 
     for (var i = 0; i < template.length; i++) {
@@ -60,8 +60,8 @@ function genTitle() {
     }
 
     var ret = {
-        "title": out,
-        "keywords": keywords
+        'title': out,
+        'keywords': keywords
     }
 
     return ret;
@@ -71,9 +71,9 @@ function genTitle() {
  * Generates random video length
  */
 function genTime() {
-    var mins = ("0" + Math.floor(Math.random()*59)).slice(-2);
-    var secs = ("0" + Math.floor(Math.random()*59)).slice(-2);
-    var out = mins + ":" + secs;
+    var mins = ('0' + Math.floor(Math.random()*59)).slice(-2);
+    var secs = ('0' + Math.floor(Math.random()*59)).slice(-2);
+    var out = mins + ':' + secs;
     return out;
 }
 
@@ -82,8 +82,8 @@ function genTime() {
  */
 function genViews() {
     var views = Math.floor(Math.random()*1000000);
-    views = views.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-    var out = views + " views";
+    views = views.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    var out = views + ' views';
     return out;
 }
 
@@ -91,10 +91,12 @@ function genViews() {
  * Generates random channel name
  */
 function genName() {
-    var fs = require("fs");
-    var text = fs.readFileSync("./names.txt");
-    var names = text.toString().split("\r\n");
-    var name = names[Math.floor(Math.random()*names.length)] + names[Math.floor(Math.random()*names.length)];
+    var fs = require('fs');
+    var text1 = fs.readFileSync('./names1.txt');
+    var text2 = fs.readFileSync('./names2.txt');
+    var names1 = text1.toString().split('\r\n');
+    var names2 = text2.toString().split('\r\n');
+    var name = names1[Math.floor(Math.random()*names1.length)] + names2[Math.floor(Math.random()*names2.length)];
     return name;
 }
 
@@ -103,7 +105,7 @@ function genName() {
  */
 async function genImg() {
     var titleObj = genTitle();
-    var title = wordWrap(titleObj.title, 18);
+    var title = wordWrap(titleObj.title, 19);
     var keywords = titleObj.keywords;
     var time = genTime();
     var views = genViews();
@@ -117,7 +119,16 @@ async function genImg() {
         .then(res=>res.json())
         .then(json => {
             return json;
+        })
+        .catch(function(err) {
+            console.log("UNSPLASH ERROR");
+            console.log(err);
         });
+
+        if (response == null) { // unsplash error
+            return;
+        }
+
         if (!response.errors) { // no images returned
             pic = response;
             break;
@@ -128,20 +139,24 @@ async function genImg() {
         .then(res=>res.json())
         .then(json => {
             return json;
+        })
+        .catch(function(err) {
+            console.log("UNSPLASH ERROR");
+            console.log(err);
         });
+
+        if (pic == null) { // unsplash error
+            return;
+        }
     }
 
     var fs = require('fs'),
     request = require('request');
-    const sharp = require('sharp');
 
     await request(pic.urls.regular)
     .pipe(fs.createWriteStream('thumb.jpg')) // downloading image
     .on('close', async function() {
-        console.log('thumbnail downloaded')
-        await sharp('thumb.jpg').resize({ height: 360, width: 640 }).toFile('thumbResize.jpg'); // resizing
-        console.log('thumbnail resized');
-
+        console.log("thumbnail downloaded");
         const { createCanvas, loadImage } = require('canvas');
         const canvas = createCanvas(1250, 380);
         const ctx = canvas.getContext('2d');
@@ -149,8 +164,8 @@ async function genImg() {
         ctx.fillStyle = '#F1F1F1';
         ctx.fillRect(0, 0, 1250, 380);
 
-        await loadImage('thumbResize.jpg').then((image) => {
-            ctx.drawImage(image, 10, 10);
+        await loadImage('thumb.jpg').then((image) => {
+            ctx.drawImage(image, 10, 10, 640, 360); // image is stretched to fit
         });
 
         ctx.fillStyle = 'black';
@@ -175,7 +190,7 @@ async function genImg() {
         fs.writeFileSync('out.png', buf);
 
         console.log('image generated');
-    })
+    });
 }
 
 /**
@@ -183,7 +198,7 @@ async function genImg() {
  * Stolen from https://stackoverflow.com/questions/14484787/wrap-text-in-javascript
  */
 function wordWrap(str, maxWidth) {
-    var newLineStr = "\n"; done = false; res = '';
+    var newLineStr = '\n'; done = false; res = '';
     while (str.length > maxWidth) {                 
         found = false;
         // Inserts new line at first whitespace of the line
@@ -231,7 +246,7 @@ async function postImg() {
         var fs = require('fs');
         var form = new FormData();
         form.append('access_token', TOKEN);
-        form.append('source', fs.createReadStream("./out.png"));
+        form.append('source', fs.createReadStream('./out.png'));
         let response = await fetch(`https://graph.facebook.com/${PAGE_ID}/photos`, {
             body: form,
             method: 'post'
@@ -249,7 +264,7 @@ async function postImg() {
 /**
  * Image upload, scheduled for every 3 hours
  */
-const task = cron.schedule("0 */3 * * *", () => {
+const task = cron.schedule('0 */3 * * *', () => {
     postImg();
 });
 

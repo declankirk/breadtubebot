@@ -24,9 +24,9 @@ const unsplash = new Unsplash({
   secret: UNSPLASH_SECRET
 });
 
-const cron = require("node-cron");
+const cron = require('node-cron');
 
-global.fetch = require("node-fetch");
+global.fetch = require('node-fetch');
 
 /**
  * Generates random title
@@ -99,10 +99,19 @@ function genName() {
 }
 
 /**
- * Gets a thumbnail for the video from Unsplash
+ * Generates our image
  */
-async function genThumbnail(keywords) {
-    var pic;
+async function genImg() {
+    var titleObj = genTitle();
+    var title = wordWrap(titleObj.title, 18);
+    var keywords = titleObj.keywords;
+    var time = genTime();
+    var views = genViews();
+    var name = genName();
+
+    console.log(title);
+
+    var pic; // getting thumbnail
     for (var i = 0; i < keywords.length; i++) {
         let response = await unsplash.photos.getRandomPhoto({ query: keywords[i] })
         .then(res=>res.json())
@@ -114,7 +123,6 @@ async function genThumbnail(keywords) {
             break;
         }
     }
-
     if (pic == null) { // if keywords return no images, random photo
         pic = await unsplash.photos.getRandomPhoto({})
         .then(res=>res.json())
@@ -123,43 +131,16 @@ async function genThumbnail(keywords) {
         });
     }
 
-    return pic;
-}
-
-/**
- * Generates our image
- */
-async function genImg() {
-    var titleObj = genTitle();
-    var title = wordWrap(titleObj.title, 20);
-    var keywords = titleObj.keywords;
-    var time = genTime();
-    var views = genViews();
-    var name = genName();
-    var pic = await genThumbnail(keywords);
-
     var fs = require('fs'),
     request = require('request');
-    var download = function(uri, filename, callback) {
-        request.head(uri, function(err, res, body){
-            console.log('content-type:', res.headers['content-type']);
-            console.log('content-length:', res.headers['content-length']);
-            request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
-        });
-    };
+    const sharp = require('sharp');
 
-    download(pic.urls.regular, 'thumb.png', async function(){ // download our thumbnail, make img in callback, god what terrible js
-        console.log('thumbnail downloaded');
-        console.log(title);
-
-        const sharp = require('sharp'); // resizing thumbnail
-        await sharp('thumb.png').resize({ height: 360, width: 640 }).toFile('thumbResize.png')
-        .then(function(newFileInfo) {
-            console.log("thumbnail resized");
-        })
-        .catch(function(err) {
-            console.log(err);
-        });
+    await request(pic.urls.regular)
+    .pipe(fs.createWriteStream('thumb.jpg')) // downloading image
+    .on('close', async function() {
+        console.log('thumbnail downloaded')
+        await sharp('thumb.jpg').resize({ height: 360, width: 640 }).toFile('thumbResize.jpg'); // resizing
+        console.log('thumbnail resized');
 
         const { createCanvas, loadImage } = require('canvas');
         const canvas = createCanvas(1250, 380);
@@ -168,7 +149,7 @@ async function genImg() {
         ctx.fillStyle = '#F1F1F1';
         ctx.fillRect(0, 0, 1250, 380);
 
-        await loadImage('thumbResize.png').then((image) => {
+        await loadImage('thumbResize.jpg').then((image) => {
             ctx.drawImage(image, 10, 10);
         });
 
@@ -178,9 +159,9 @@ async function genImg() {
 
         var displacement = (countLines(title) * 55) + 85;
         ctx.fillStyle = 'grey';
-        ctx.font = '30px Arial';
+        ctx.font = '40px Arial';
         ctx.fillText(name, 675, displacement);
-        ctx.fillText(views, 675, displacement + 50)
+        ctx.fillText(views, 675, displacement + 55)
 
         ctx.fillStyle = 'black';
         ctx.globalAlpha = 0.8;
@@ -191,10 +172,10 @@ async function genImg() {
         ctx.fillText(time, 565, 350);
 
         var buf = canvas.toBuffer();
-        fs.writeFileSync("out.png", buf);
+        fs.writeFileSync('out.png', buf);
 
-        console.log("image generated");
-    });
+        console.log('image generated');
+    })
 }
 
 /**
@@ -272,4 +253,4 @@ const task = cron.schedule("0 */3 * * *", () => {
     postImg();
 });
 
-//task.start();
+task.start();

@@ -11,7 +11,6 @@ Philosophy
 Politics
 Film
 Cinema
-Justice
 Tube
 TV
 Gaming
@@ -22,7 +21,8 @@ Ideas
 Radical
 Trash
 Garbage
-666
 Opinions
 Cringe
 Rants
+Critic
+Nerd

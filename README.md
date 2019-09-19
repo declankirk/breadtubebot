@@ -1,5 +1,5 @@
 # Video Essay Bot
-Facebook bot that generates hypothetical youtube video essays.
+Facebook/Twitter bot that generates hypothetical YouTube video essays.
 
 https://www.facebook.com/videoessaybot
 

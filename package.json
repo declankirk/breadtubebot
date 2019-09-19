@@ -1,7 +1,7 @@
 {
   "name": "breadtubebot",
-  "version": "1.0.0",
-  "description": "Facebook bot that generates hypothetical youtube video essay titles.",
+  "version": "1.1.2",
+  "description": "Bot that generates hypothetical youtube video essay titles.",
   "main": "bot.js",
   "dependencies": {
     "canvas": "^2.6.0",

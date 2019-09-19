@@ -4,7 +4,7 @@
  * Author: Declan Kirk
  * Created: 08/09/2019
  * 
- * Posts hypothetical YouTube video essays to https://www.facebook.com/videoessaybot every 3 hours.
+ * Posts hypothetical YouTube video essays every 3 hours.
  * 
  * Version 1.2.1
  */

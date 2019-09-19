@@ -6,26 +6,23 @@
  * 
  * Posts hypothetical YouTube video essays to https://www.facebook.com/videoessaybot every 3 hours.
  * 
- * Version 1.1.1
+ * Version 1.2.1
  */
 
-const config = require('../config/breadtubebot.json');
-const PAGE_ID = config.page_id;
-const TOKEN = config.token;
-const UNSPLASH_ACCESS = config.unsplash_access;
-const UNSPLASH_SECRET = config.unsplash_secret;
+const config = require('./config.json');
 
+const PAGE_ID = config.facebook.page_id;
+const TOKEN = config.facebook.token;
 const FB = require('fb');
 FB.setAccessToken(TOKEN);
 
+const Twitter = require('twit');
+const T = new Twitter(config.twitter);
+
 const Unsplash = require('unsplash-js').default;
-const unsplash = new Unsplash({
-  applicationId: UNSPLASH_ACCESS,
-  secret: UNSPLASH_SECRET
-});
+const unsplash = new Unsplash(config.unsplash);
 
 const cron = require('node-cron');
-
 global.fetch = require('node-fetch');
 
 /**
@@ -101,18 +98,19 @@ function genName() {
 }
 
 /**
- * Generates our image
+ * Generates our images (formatted for facbook and twitter) and posts em
  */
 async function genImg() {
     var titleObj = genTitle();
-    var title = wordWrap(titleObj.title, 19);
+    var title = titleObj.title;
+    var titleWrap = wordWrap(title, 19);
     var keywords = titleObj.keywords;
     var time = genTime();
     var views = genViews();
     var name = genName();
 
     console.log(title);
-
+    
     var pic; // getting thumbnail
     for (var i = 0; i < keywords.length; i++) {
         let response = await unsplash.photos.getRandomPhoto({ query: keywords[i] })
@@ -124,11 +122,7 @@ async function genImg() {
             console.log("UNSPLASH ERROR");
             console.log(err);
         });
-
-        if (response == null) { // unsplash error
-            return;
-        }
-
+        if (response == null) return;
         if (!response.errors) { // no images returned
             pic = response;
             break;
@@ -144,12 +138,9 @@ async function genImg() {
             console.log("UNSPLASH ERROR");
             console.log(err);
         });
-
-        if (pic == null) { // unsplash error
-            return;
-        }
+        if (pic == null) return;
     }
-
+    
     var fs = require('fs'),
     request = require('request');
 
@@ -157,9 +148,13 @@ async function genImg() {
     .pipe(fs.createWriteStream('thumb.jpg')) // downloading image
     .on('close', async function() {
         console.log("thumbnail downloaded");
+        var fs = require('fs');
+
+        // FACEBOOK
+
         const { createCanvas, loadImage } = require('canvas');
-        const canvas = createCanvas(1250, 380);
-        const ctx = canvas.getContext('2d');
+        var canvas = createCanvas(1250, 380);
+        var ctx = canvas.getContext('2d');
 
         ctx.fillStyle = '#F1F1F1';
         ctx.fillRect(0, 0, 1250, 380);
@@ -170,9 +165,9 @@ async function genImg() {
 
         ctx.fillStyle = 'black';
         ctx.font = '55px Arial';
-        ctx.fillText(title, 670, 70);
+        ctx.fillText(titleWrap, 670, 70);
 
-        var displacement = (countLines(title) * 55) + 85;
+        var displacement = (countLines(titleWrap) * 55) + 85;
         ctx.fillStyle = 'grey';
         ctx.font = '40px Arial';
         ctx.fillText(name, 675, displacement);
@@ -188,8 +183,65 @@ async function genImg() {
 
         var buf = canvas.toBuffer();
         fs.writeFileSync('out.png', buf);
+        console.log('FB image generated');
 
-        console.log('image generated');
+        // TWITTER
+
+        canvas = createCanvas(640, 360);
+        ctx = canvas.getContext('2d');
+
+        await loadImage('thumb.jpg').then((image) => {
+            ctx.drawImage(image, 0, 0, 640, 360);
+        });
+
+        ctx.fillStyle = 'black';
+        ctx.globalAlpha = 0.8;
+        ctx.fillRect(550, 310, 80, 40);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 27px Arial';
+        ctx.fillText(time, 555, 340);
+
+        buf = canvas.toBuffer();
+        fs.writeFileSync('outTwitter.png', buf);
+        console.log('Twitter image generated');
+
+        try {
+            // POSTING TO FACEBOOK
+            var FormData = require('form-data');
+            var form = new FormData();
+            form.append('access_token', TOKEN);
+            form.append('source', fs.createReadStream('./out.png'));
+            form.append('message', 'Up next:');
+            let response = await fetch(`https://graph.facebook.com/${PAGE_ID}/photos`, {
+                body: form,
+                method: 'post'
+            });
+            response = await response.json();
+            console.log("POSTED TO FACEBOOK");
+            console.log(response);
+
+            // POSTING TO TWITTER
+            var twitMsg = title + " | " + name + "\n\n" + views;
+            var b64img = fs.readFileSync('./outTwitter.png', { encoding: 'base64' });
+            T.post('media/upload', { media_data: b64img }, function (err, data, response) {
+                var mediaIdStr = data.media_id_string
+                var altText = "video"
+                var meta_params = { media_id: mediaIdStr, alt_text: { text: altText } }
+            
+                T.post('media/metadata/create', meta_params, function (err, data, response) {
+                    if (!err) {
+                        var params = { status: twitMsg, media_ids: [mediaIdStr] }
+                        T.post('statuses/update', params, function (err, data, response) {
+                            console.log("POSTED TO TWITTER")
+                            console.log(data);
+                        })
+                    }
+                })
+            });
+        } catch(error) { // catch network issues
+            console.log(error);
+        }
     });
 }
 
@@ -215,7 +267,6 @@ function wordWrap(str, maxWidth) {
             res += [str.slice(0, maxWidth), newLineStr].join('');
             str = str.slice(maxWidth);
         }
-
     }
     return res + str;
 }
@@ -237,35 +288,14 @@ function countLines(str) {
     return count;
 }
 
-/**
- * Posts image, generates next one for next time
- */
-async function postImg() {
-    try {
-        var FormData = require('form-data');
-        var fs = require('fs');
-        var form = new FormData();
-        form.append('access_token', TOKEN);
-        form.append('source', fs.createReadStream('./out.png'));
-        let response = await fetch(`https://graph.facebook.com/${PAGE_ID}/photos`, {
-            body: form,
-            method: 'post'
-        });
-        response = await response.json();
-        console.log(response);
-        genImg();
-    } catch (error) {
-        console.log(error);
-    }
-}
-
-
 
 /**
  * Image upload, scheduled for every 3 hours
  */
 const task = cron.schedule('0 */3 * * *', () => {
-    postImg();
+    genImg();
 });
 
-task.start();
+// task.start();
+
+genImg();

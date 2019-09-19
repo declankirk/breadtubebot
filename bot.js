@@ -147,7 +147,7 @@ async function genImg() {
     await request(pic.urls.regular)
     .pipe(fs.createWriteStream('thumb.jpg')) // downloading image
     .on('close', async function() {
-        console.log("thumbnail downloaded");
+        console.log("THUMBNAIL DOWNLOADED");
         var fs = require('fs');
 
         // FACEBOOK
@@ -183,7 +183,7 @@ async function genImg() {
 
         var buf = canvas.toBuffer();
         fs.writeFileSync('out.png', buf);
-        console.log('FB image generated');
+        console.log('FB IMAGE GENERATED');
 
         // TWITTER
 
@@ -204,7 +204,7 @@ async function genImg() {
 
         buf = canvas.toBuffer();
         fs.writeFileSync('outTwitter.png', buf);
-        console.log('Twitter image generated');
+        console.log('TWITTER IMAGE GENERATED');
 
         try {
             // POSTING TO FACEBOOK
@@ -240,8 +240,13 @@ async function genImg() {
                 })
             });
         } catch(error) { // catch network issues
+            console.log("UPLOAD FAILED")
             console.log(error);
         }
+    })
+    .on('error', function(error) {
+        console.log("DOWNLOAD FAILED");
+        console.log(error);
     });
 }
 
@@ -296,6 +301,4 @@ const task = cron.schedule('0 */3 * * *', () => {
     genImg();
 });
 
-// task.start();
-
-genImg();
+task.start();

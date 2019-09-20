@@ -6,7 +6,7 @@
  * 
  * Posts hypothetical YouTube video essays every 3 hours.
  * 
- * Version 1.2.1
+ * Version 1.2.2
  */
 
 const config = require('./config.json');
@@ -110,44 +110,23 @@ async function genImg() {
     var name = genName();
 
     console.log(title);
-    
-    var pic; // getting thumbnail
-    for (var i = 0; i < keywords.length; i++) {
-        let response = await unsplash.photos.getRandomPhoto({ query: keywords[i] })
-        .then(res=>res.json())
-        .then(json => {
-            return json;
-        })
-        .catch(function(err) {
-            console.log("UNSPLASH ERROR");
-            console.log(err);
-        });
-        if (response == null) return;
-        if (!response.errors) { // no images returned
-            pic = response;
-            break;
-        }
-    }
-    if (pic == null) { // if keywords return no images, random photo
-        pic = await unsplash.photos.getRandomPhoto({})
-        .then(res=>res.json())
-        .then(json => {
-            return json;
-        })
-        .catch(function(err) {
-            console.log("UNSPLASH ERROR");
-            console.log(err);
-        });
-        if (pic == null) return;
-    }
-    
-    var fs = require('fs'),
-    request = require('request');
 
-    await request(pic.urls.regular)
-    .pipe(fs.createWriteStream('thumb.jpg')) // downloading image
-    .on('close', async function() {
+    let {PythonShell} = require('python-shell');
+    let options = {
+        mode: 'text',
+        pythonOptions: ['-u'],
+        args: keywords
+    };
+
+    PythonShell.run('fetch.py', options, async function (err, results) {
+        if (err) {
+            console.log("SPB/PYTHON ERROR");
+            console.log(err);
+            return;
+        };
         console.log("THUMBNAIL DOWNLOADED");
+        console.log(results);
+
         var fs = require('fs');
 
         // FACEBOOK
@@ -160,7 +139,7 @@ async function genImg() {
         ctx.fillRect(0, 0, 1250, 380);
 
         await loadImage('thumb.jpg').then((image) => {
-            ctx.drawImage(image, 10, 10, 640, 360); // image is stretched to fit
+            ctx.drawImage(image, 10, 10, 640, 360); // stretch
         });
 
         ctx.fillStyle = 'black';
@@ -243,15 +222,11 @@ async function genImg() {
             console.log("UPLOAD FAILED")
             console.log(error);
         }
-    })
-    .on('error', function(error) {
-        console.log("DOWNLOAD FAILED");
-        console.log(error);
     });
 }
 
 /**
- * Wraps text string
+ * Wraps text string for img formatting
  * Stolen from https://stackoverflow.com/questions/14484787/wrap-text-in-javascript
  */
 function wordWrap(str, maxWidth) {

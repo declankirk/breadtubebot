@@ -19,9 +19,6 @@ FB.setAccessToken(TOKEN);
 const Twitter = require('twit');
 const T = new Twitter(config.twitter);
 
-const Unsplash = require('unsplash-js').default;
-const unsplash = new Unsplash(config.unsplash);
-
 const cron = require('node-cron');
 global.fetch = require('node-fetch');
 
@@ -109,6 +106,7 @@ async function genImg() {
     var views = genViews();
     var name = genName();
 
+    console.log('\n');
     console.log(title);
 
     let {PythonShell} = require('python-shell');
@@ -120,16 +118,16 @@ async function genImg() {
 
     PythonShell.run('fetch.py', options, async function (err, results) {
         if (err) {
-            console.log("SPB/PYTHON ERROR");
+            console.log('SPB/PYTHON ERROR');
             console.log(err);
             return;
         };
-        console.log("THUMBNAIL DOWNLOADED");
+        console.log('THUMBNAIL DOWNLOADED');
         console.log(results);
 
         var fs = require('fs');
 
-        // FACEBOOK
+        // FACEBOOK IMG
 
         const { createCanvas, loadImage } = require('canvas');
         var canvas = createCanvas(1250, 380);
@@ -164,7 +162,7 @@ async function genImg() {
         fs.writeFileSync('out.png', buf);
         console.log('FB IMAGE GENERATED');
 
-        // TWITTER
+        // TWITTER IMG
 
         canvas = createCanvas(640, 360);
         ctx = canvas.getContext('2d');
@@ -198,7 +196,7 @@ async function genImg() {
             });
             response = await response.json();
             console.log("POSTED TO FACEBOOK");
-            console.log(response);
+            // console.log(response);
 
             // POSTING TO TWITTER
             var twitMsg = title + " | " + name + "\n\n" + views;
@@ -213,7 +211,7 @@ async function genImg() {
                         var params = { status: twitMsg, media_ids: [mediaIdStr] }
                         T.post('statuses/update', params, function (err, data, response) {
                             console.log("POSTED TO TWITTER")
-                            console.log(data);
+                            // console.log(data);
                         })
                     }
                 })
@@ -277,3 +275,5 @@ const task = cron.schedule('0 */3 * * *', () => {
 });
 
 task.start();
+
+// genImg();

@@ -84,7 +84,7 @@ function genViews() {
 /**
  * Generates random channel name
  */
-function genName() {
+function genName(upload) {
     var fs = require('fs');
     var text1 = fs.readFileSync('./names1.txt');
     var text2 = fs.readFileSync('./names2.txt');
@@ -97,16 +97,16 @@ function genName() {
 /**
  * Generates our images (formatted for facbook and twitter) and posts em
  */
-async function genImg() {
+async function genImg(upload) {
     var titleObj = genTitle();
     var title = titleObj.title;
-    var titleWrap = wordWrap(title, 19);
+    var titleWrap = wordWrap(title, 18);
     var keywords = titleObj.keywords;
     var time = genTime();
     var views = genViews();
     var name = genName();
 
-    console.log('\n');
+    console.log();
     console.log(title);
 
     let {PythonShell} = require('python-shell');
@@ -182,45 +182,46 @@ async function genImg() {
         buf = canvas.toBuffer();
         fs.writeFileSync('outTwitter.png', buf);
         console.log('TWITTER IMAGE GENERATED');
-
-        try {
-            // POSTING TO FACEBOOK
-            var FormData = require('form-data');
-            var form = new FormData();
-            form.append('access_token', TOKEN);
-            form.append('source', fs.createReadStream('./out.png'));
-            form.append('message', 'Up next:');
-            let response = await fetch(`https://graph.facebook.com/${PAGE_ID}/photos`, {
-                body: form,
-                method: 'post'
-            });
-            response = await response.json();
-            console.log("POSTED TO FACEBOOK");
-            // console.log(response);
-
-            // POSTING TO TWITTER
-            var twitMsg = title + " | " + name + "\n\n" + views;
-            var b64img = fs.readFileSync('./outTwitter.png', { encoding: 'base64' });
-            T.post('media/upload', { media_data: b64img }, function (err, data, response) {
-                var mediaIdStr = data.media_id_string
-                var altText = "video"
-                var meta_params = { media_id: mediaIdStr, alt_text: { text: altText } }
-            
-                T.post('media/metadata/create', meta_params, function (err, data, response) {
-                    if (!err) {
-                        var params = { status: twitMsg, media_ids: [mediaIdStr] }
-                        T.post('statuses/update', params, function (err, data, response) {
-                            console.log("POSTED TO TWITTER")
-                            // console.log(data);
-                        })
-                    }
-                })
-            });
-        } catch(error) { // catch network issues
-            console.log("UPLOAD FAILED")
-            console.log(error);
+        if (upload) {
+            try {
+                // POSTING TO FACEBOOK
+                var FormData = require('form-data');
+                var form = new FormData();
+                form.append('access_token', TOKEN);
+                form.append('source', fs.createReadStream('./out.png'));
+                form.append('message', 'Up next:');
+                let response = await fetch(`https://graph.facebook.com/${PAGE_ID}/photos`, {
+                    body: form,
+                    method: 'post'
+                });
+                response = await response.json();
+                console.log("POSTED TO FACEBOOK");
+                // console.log(response);
+    
+                // POSTING TO TWITTER
+                var twitMsg = title + " | " + name + "\n\n" + views;
+                var b64img = fs.readFileSync('./outTwitter.png', { encoding: 'base64' });
+                T.post('media/upload', { media_data: b64img }, function (err, data, response) {
+                    var mediaIdStr = data.media_id_string
+                    var altText = "video"
+                    var meta_params = { media_id: mediaIdStr, alt_text: { text: altText } }
+                
+                    T.post('media/metadata/create', meta_params, function (err, data, response) {
+                        if (!err) {
+                            var params = { status: twitMsg, media_ids: [mediaIdStr] }
+                            T.post('statuses/update', params, function (err, data, response) {
+                                console.log("POSTED TO TWITTER")
+                                // console.log(data);
+                            })
+                        }
+                    })
+                });
+            } catch(error) { // catch network issues
+                console.log("UPLOAD FAILED")
+                console.log(error);
+            }
         }
-    });
+    }.bind({upload:upload}));
 }
 
 /**
@@ -271,9 +272,19 @@ function countLines(str) {
  * Image upload, scheduled for every 3 hours
  */
 const task = cron.schedule('0 */3 * * *', () => {
-    genImg();
+    genImg(true);
 });
 
-task.start();
-
-// genImg();
+var args = process.argv.slice(2);
+if (args.length < 1) {
+    console.log("Starting post scheduling...");
+    task.start();
+} else if (args.length == 1 && args[0] == "-m") {
+    console.log("Posting manually...");
+    genImg(true);
+} else if (args.length == 1 && args[0] == "-t") {
+    console.log("Generating test image...");
+    genImg(false);
+} else {
+    console.log("Usage: node bot.js [-m|-t]");
+}

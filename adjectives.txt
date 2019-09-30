@@ -5,6 +5,7 @@ Fascist
 Centrist
 Capitalist
 Liberal
+Conservative
 Libertarian
 Good
 Bad
@@ -24,3 +25,7 @@ Cute
 Genius
 Smart
 Nice
+Stinky
+Lame
+Sentient
+Sad

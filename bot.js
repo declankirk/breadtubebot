@@ -100,7 +100,7 @@ function genName(upload) {
 async function genImg(upload) {
     var titleObj = genTitle();
     var title = titleObj.title;
-    var titleWrap = wordWrap(title, 18);
+    var titleWrap = wordWrap(title, 19);
     var keywords = titleObj.keywords;
     var time = genTime();
     var views = genViews();
@@ -136,10 +136,13 @@ async function genImg(upload) {
         ctx.fillStyle = '#F1F1F1';
         ctx.fillRect(0, 0, 1250, 380);
 
+        ctx.fillStyle = 'white';
+        ctx.fillRect(10, 10, 640, 360);
+        
         await loadImage('thumb.jpg').then((image) => {
             ctx.drawImage(image, 10, 10, 640, 360); // stretch
         });
-
+        
         ctx.fillStyle = 'black';
         ctx.font = '55px Arial';
         ctx.fillText(titleWrap, 670, 70);
@@ -166,6 +169,9 @@ async function genImg(upload) {
 
         canvas = createCanvas(640, 360);
         ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, 640, 360);
 
         await loadImage('thumb.jpg').then((image) => {
             ctx.drawImage(image, 0, 0, 640, 360);
@@ -268,10 +274,7 @@ function countLines(str) {
 }
 
 
-/**
- * Image upload, scheduled for every 3 hours
- */
-const task = cron.schedule('0 */3 * * *', () => {
+const task = cron.schedule('0 */3 * * *', () => { // post scheduled for every 3 hours
     genImg(true);
 });
 
@@ -287,4 +290,5 @@ if (args.length < 1) {
     genImg(false);
 } else {
     console.log("Usage: node bot.js [-m|-t]");
+    process.exit();
 }

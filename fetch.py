@@ -27,7 +27,6 @@ def get_lnk(query,sort = 'random'):
     for div in soup.findAll('div', attrs={'class':'img'}):
         result.append(div.find('a')['href'])
     if len(result) == 0:
-        #raise Exception('Sorry, couldn\'t find anything :(')
         return ''
     else:
         if sort == 'random':
@@ -46,29 +45,10 @@ def get_img(cmd,sort='random'):
         return 'https://www.shitpostbot.com' + (div.find('a')['href'])
 
 def dl(url):
-    # urllib.request.urlretrieve(url,'images/' + url.replace('https://www.shitpostbot.com/img/sourceimages/', ''))
     urllib.request.urlretrieve(url, 'thumb.jpg')
     print('Successfully downloaded ' + url.replace('https://www.shitpostbot.com/img/sourceimages/', ''))
 
 
-#if len(sys.argv) <= 2 :
-#    print("\nUsage:\npython fetch.py -q [query] \n ")
-#    sys.exit (1)
-#elif '-q' in sys.argv:
-#    index = sys.argv.index('-q')
-#    if sys.argv[index + 1] == '--rand':
-#        print('Downloading Random Image from ShitPostBot...')
-#        image = reqImg()
-#        dl(image)
-#    else:
-#        if '--top' in sys.argv:
-#            url = get_img(str(sys.argv[index + 1]),'top')
-#            print('Downloading the top post containing %s from ShitPostBot...'%(str(sys.argv[index + 1])))
-#            dl(url)
-#        else:
-#            url = get_img(str(sys.argv[index + 1]))
-#            print('Downloading %s from ShitPostBot...'%(str(sys.argv[index + 1])))
-#            dl(url)
 
 if len(sys.argv) <= 1:
     print('Downloading Random Image from ShitPostBot...')

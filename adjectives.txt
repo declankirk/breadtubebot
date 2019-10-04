@@ -9,6 +9,7 @@ Conservative
 Libertarian
 Good
 Bad
+Evil
 Cringe
 Cool
 Furry
@@ -26,6 +27,12 @@ Genius
 Smart
 Nice
 Stinky
+Smelly
 Lame
 Sentient
 Sad
+Problematic
+Real
+Dead
+Edgy
+Okay

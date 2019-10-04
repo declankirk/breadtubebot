@@ -47,9 +47,7 @@ Sony
 Pokemon
 Skyrim
 Pewdiepie
-Paintbot
 Burgerbot
-Sentience
 Poop
 Facebook
 Twitter
@@ -98,6 +96,7 @@ Millenials
 Rick and Morty
 Propaganda
 Breaking Bad
+Sentience
 Tarantino
 Peter Griffin
 Metal
@@ -132,3 +131,11 @@ Tom and Jerry
 God
 Jesus
 Depression
+Lego
+Tom Cruise
+Russia
+Goose
+Eminem
+Video Essay Bot
+News Bot
+Milk

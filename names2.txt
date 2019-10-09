@@ -24,3 +24,6 @@ Town
 Show
 Opinions
 Hub
+King
+House
+Gaming

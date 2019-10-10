@@ -142,7 +142,27 @@ async function genImg(upload) {
         await loadImage('thumb.jpg').then((image) => {
             ctx.drawImage(image, 10, 10, 640, 360); // stretch
         });
+
+        var files = fs.readdirSync('./filters/')
+        let filter = files[Math.floor(Math.random() * files.length)] 
+
+        await loadImage(`filters/${filter}`).then((image) => { // random aesthetic filter
+            ctx.drawImage(image, 10, 10, 640, 360);
+        });
+
+        var randomColor = require('randomcolor');
+        var color = randomColor();
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.2;
+        ctx.fillRect(10, 10, 640, 360); // random hue overlay
+        ctx.globalAlpha = 1;
         
+        if (Math.random() > 0.95) { // 5% chance of vhs text
+            await loadImage('vhs.png').then((image) => {
+                ctx.drawImage(image, 30, 20, 600, 340);
+            });
+        }
+
         ctx.fillStyle = 'black';
         ctx.font = '55px Arial';
         ctx.fillText(titleWrap, 670, 70);

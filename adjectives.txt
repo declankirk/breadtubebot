@@ -61,3 +61,6 @@ Romantic
 Emotional
 Stagnant
 Cinematic
+Funny
+Angry
+Happy

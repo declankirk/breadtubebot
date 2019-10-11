@@ -100,7 +100,6 @@ function genName(upload) {
 async function genImg(upload) {
     var titleObj = genTitle();
     var title = titleObj.title;
-    var titleWrap = wordWrap(title, 19);
     var keywords = titleObj.keywords;
     var time = genTime();
     var views = genViews();
@@ -146,16 +145,16 @@ async function genImg(upload) {
         var files = fs.readdirSync('./filters/')
         let filter = files[Math.floor(Math.random() * files.length)] 
 
-        await loadImage(`filters/${filter}`).then((image) => { // random aesthetic filter
-            ctx.drawImage(image, 10, 10, 640, 360);
-        });
-
         var randomColor = require('randomcolor');
         var color = randomColor();
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.2;
         ctx.fillRect(10, 10, 640, 360); // random hue overlay
         ctx.globalAlpha = 1;
+
+        await loadImage(`filters/${filter}`).then((image) => { // random aesthetic filter
+            ctx.drawImage(image, 10, 10, 640, 360);
+        });
         
         if (Math.random() > 0.95) { // 5% chance of vhs text
             await loadImage('vhs.png').then((image) => {
@@ -165,9 +164,46 @@ async function genImg(upload) {
 
         ctx.fillStyle = 'black';
         ctx.font = '55px Arial';
-        ctx.fillText(titleWrap, 670, 70);
+        var words = title.split(' '),
+            line = '',
+            lineCount = 0,
+            i,
+            test,
+            metrics,
+            x = 670,
+            y = 70,
+            lineHeight = 65,
+            maxWidth = 550;
 
-        var displacement = (countLines(titleWrap) * 55) + 85;
+        for (i = 0; i < words.length; i++) { // text wrapping algo
+            test = words[i];
+            metrics = ctx.measureText(test);
+            while (metrics.width > maxWidth) {
+                test = test.substring(0, test.length - 1);
+                metrics = ctx.measureText(test);
+            }
+            if (words[i] != test) {
+                words.splice(i + 1, 0,  words[i].substr(test.length))
+                words[i] = test;
+            }  
+
+            test = line + words[i] + ' ';  
+            metrics = ctx.measureText(test);
+            
+            if (metrics.width > maxWidth && i > 0) {
+                ctx.fillText(line, x, y);
+                line = words[i] + ' ';
+                y += lineHeight;
+                lineCount++;
+            }
+            else {
+                line = test;
+            }
+        }
+
+        ctx.fillText(line, x, y);
+
+        var displacement = ((lineCount + 1) * 55) + 85;
         ctx.fillStyle = 'grey';
         ctx.font = '40px Arial';
         ctx.fillText(name, 675, displacement);
@@ -194,6 +230,15 @@ async function genImg(upload) {
         ctx.fillRect(0, 0, 640, 360);
 
         await loadImage('thumb.jpg').then((image) => {
+            ctx.drawImage(image, 0, 0, 640, 360);
+        });
+
+        ctx.fillStyle = color;
+        ctx.globalAlpha = 0.2;
+        ctx.fillRect(0, 0, 640, 360); // random hue overlay
+        ctx.globalAlpha = 1;
+
+        await loadImage(`filters/${filter}`).then((image) => { // random aesthetic filter
             ctx.drawImage(image, 0, 0, 640, 360);
         });
 
@@ -248,49 +293,6 @@ async function genImg(upload) {
             }
         }
     }.bind({upload:upload}));
-}
-
-/**
- * Wraps text string for img formatting
- * Stolen from https://stackoverflow.com/questions/14484787/wrap-text-in-javascript
- */
-function wordWrap(str, maxWidth) {
-    var newLineStr = '\n'; done = false; res = '';
-    while (str.length > maxWidth) {                 
-        found = false;
-        // Inserts new line at first whitespace of the line
-        for (i = maxWidth - 1; i >= 0; i--) {
-            if (testWhite(str.charAt(i))) {
-                res = res + [str.slice(0, i), newLineStr].join('');
-                str = str.slice(i + 1);
-                found = true;
-                break;
-            }
-        }
-        // Inserts new line at maxWidth position, the word is too long to wrap
-        if (!found) {
-            res += [str.slice(0, maxWidth), newLineStr].join('');
-            str = str.slice(maxWidth);
-        }
-    }
-    return res + str;
-}
-function testWhite(x) {
-    var white = new RegExp(/^\s$/);
-    return white.test(x.charAt(0));
-};
-
-/**
- * Counts number of lines in a string
- */
-function countLines(str) {
-    var count = 1;
-    for (var i = 0; i < str.length; i++) {
-        if (str.charAt(i) == '\n') {
-            count++;
-        }
-    }
-    return count;
 }
 
 

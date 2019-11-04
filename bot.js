@@ -156,7 +156,7 @@ async function genImg(upload) {
             ctx.drawImage(image, 10, 10, 640, 360);
         });
         
-        if (Math.random() > 0.95) { // 5% chance of vhs text
+        if (Math.random() > 0.95) { // 5% chance of vhs text cos why not
             await loadImage('vhs.png').then((image) => {
                 ctx.drawImage(image, 30, 20, 600, 340);
             });
@@ -295,22 +295,19 @@ async function genImg(upload) {
     }.bind({upload:upload}));
 }
 
-
-const task = cron.schedule('0 */3 * * *', () => { // post scheduled for every 3 hours
-    genImg(true);
-});
-
 var args = process.argv.slice(2);
-if (args.length < 1) {
+if (!args.length) {
     console.log("Starting post scheduling...");
+    const task = cron.schedule('0 */3 * * *', () => { // post scheduled for every 3 hours
+        genImg(true);
+    });
     task.start();
-} else if (args.length == 1 && args[0] == "-m") {
+} else if (args[0] == "-m") {
     console.log("Posting manually...");
     genImg(true);
-} else if (args.length == 1 && args[0] == "-t") {
+} else if (args[0] == "-t") {
     console.log("Generating test image...");
     genImg(false);
 } else {
     console.log("Usage: node bot.js [-m|-t]");
-    process.exit();
 }

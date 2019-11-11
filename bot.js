@@ -84,7 +84,7 @@ function genViews() {
 /**
  * Generates random channel name
  */
-function genName(upload) {
+function genName() {
     var fs = require('fs');
     var text1 = fs.readFileSync('./names1.txt');
     var text2 = fs.readFileSync('./names2.txt');
@@ -156,7 +156,10 @@ async function genImg(upload) {
             ctx.drawImage(image, 10, 10, 640, 360);
         });
         
-        if (Math.random() > 0.95) { // 5% chance of vhs text cos why not
+        var vhsFilter = false;
+        if (Math.random() > 0.95) vhsFilter = true;
+
+        if (vhsFilter) { // 5% chance of vhs text cos why not
             await loadImage('vhs.png').then((image) => {
                 ctx.drawImage(image, 30, 20, 600, 340);
             });
@@ -238,9 +241,15 @@ async function genImg(upload) {
         ctx.fillRect(0, 0, 640, 360); // random hue overlay
         ctx.globalAlpha = 1;
 
-        await loadImage(`filters/${filter}`).then((image) => { // random aesthetic filter
+        await loadImage(`filters/${filter}`).then((image) => { // filter
             ctx.drawImage(image, 0, 0, 640, 360);
         });
+
+        if (vhsFilter) { // vhs
+            await loadImage('vhs.png').then((image) => {
+                ctx.drawImage(image, 20, 10, 590, 330);
+            });
+        }
 
         ctx.fillStyle = 'black';
         ctx.globalAlpha = 0.8;
@@ -266,7 +275,7 @@ async function genImg(upload) {
                     method: 'post'
                 });
                 response = await response.json();
-                console.log("POSTED TO FACEBOOK");
+                console.log('POSTED TO FACEBOOK at ' + getDateTime());
                 // console.log(response);
     
                 // POSTING TO TWITTER
@@ -281,7 +290,7 @@ async function genImg(upload) {
                         if (!err) {
                             var params = { status: twitMsg, media_ids: [mediaIdStr] }
                             T.post('statuses/update', params, function (err, data, response) {
-                                console.log("POSTED TO TWITTER")
+                                console.log('POSTED TO TWITTER at ' + getDateTime())
                                 // console.log(data);
                             })
                         }
@@ -293,6 +302,25 @@ async function genImg(upload) {
             }
         }
     }.bind({upload:upload}));
+}
+
+/**
+ * Timestamp for logging
+ */
+function getDateTime() {
+    var date = new Date();
+    var hour = date.getHours();
+    hour = (hour < 10 ? "0" : "") + hour;
+    var min  = date.getMinutes();
+    min = (min < 10 ? "0" : "") + min;
+    var sec  = date.getSeconds();
+    sec = (sec < 10 ? "0" : "") + sec;
+    var year = date.getFullYear();
+    var month = date.getMonth() + 1;
+    month = (month < 10 ? "0" : "") + month;
+    var day  = date.getDate();
+    day = (day < 10 ? "0" : "") + day;
+    return year + "/" + month + "/" + day + " " + hour + ":" + min + ":" + sec;
 }
 
 var args = process.argv.slice(2);

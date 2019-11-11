@@ -63,3 +63,4 @@ What Makes # So %?
 # is Right About #
 # is Wrong About #
 Is # Too %?
+# is %, %, and %

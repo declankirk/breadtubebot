@@ -27,6 +27,8 @@ global.fetch = require('node-fetch');
  */
 function genTitle() {
     var fs = require('fs');
+    // var pluralize = require('pluralize');
+
     var text = fs.readFileSync('./templates.txt');
     var templates = text.toString().split('\r\n');
     text = fs.readFileSync('./nouns.txt');
@@ -41,11 +43,30 @@ function genTitle() {
     for (var i = 0; i < template.length; i++) {
         if (template.charAt(i) == '#') {
             var noun = nouns[Math.floor(Math.random()*nouns.length)];
+
+            if (i > 1 && template.charAt(i - 2) == '%' && noun.startsWith("The ")) { // 'the' grammar
+                noun = noun.substr(4);
+            }
+
+            /*if (pluralize.isPlural(noun) && template.substr(i - 3).toLowerCase().startsWith("is ")) {
+                out = out.substr(0, out.length - 3) + "Are ";
+            }*/
+
             out += noun;
             keywords.push(noun);
+
+            /*if (pluralize.isPlural(noun) && template.substr(i).toLowerCase().startsWith("# is")) {
+                out += " are";
+                i += 3;
+            }*/
         }
         else if (template.charAt(i) == '%') {
             var adj = adjectives[Math.floor(Math.random()*adjectives.length)];
+
+            if (vowel(adj) && template.substr(i - 2).startsWith("a ")) { // a/an grammar
+                out = out.substr(0, out.length - 2) + "an ";
+            }
+
             out += adj;
             keywords.push(adj);
         } else {
@@ -59,6 +80,17 @@ function genTitle() {
     }
 
     return ret;
+}
+
+/**
+ * Helper function for a/an grammar
+ */
+function vowel(str) {
+    let fstLetter = str.charAt(0).toLowerCase();
+    if (fstLetter=='a' || fstLetter=='e'|| fstLetter=='i' || fstLetter=='o' || fstLetter=='u') {
+        return true;
+    }
+    return false;
 }
 
 /**
